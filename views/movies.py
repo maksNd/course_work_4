@@ -3,7 +3,7 @@ from flask_restx import Resource, Namespace
 
 from dao.model.movie import MovieSchema
 from implemented import movie_service
-from views.decorators import auth_required, admin_required
+from views.decorators import auth_required
 
 movie_ns = Namespace('movies')
 
@@ -13,12 +13,6 @@ class MoviesView(Resource):
 
     # @auth_required
     def get(self):
-        page = int(request.args['page'])
-        object_count_on_page = 5
-        from_object = (page * object_count_on_page) - object_count_on_page
-        print(from_object)
-        # to_object = page
-        print(page)
         director = request.args.get("director_id")
         genre = request.args.get("genre_id")
         year = request.args.get("year")
@@ -27,12 +21,27 @@ class MoviesView(Resource):
             "genre_id": genre,
             "year": year,
         }
-        all_movies = movie_service.get_all(filters)
-        # print(MovieSchema().dump(all_movies[1]))
-        res = MovieSchema(many=True).dump(all_movies)
-        return res, 200
 
-    @admin_required
+        status = request.args.get('status')
+        if status == 'new':
+            all_movies = movie_service.get_sorted()
+        else:
+            all_movies = movie_service.get_all(filters)
+
+        page = request.args.get('page')
+        if page is not None:
+            try:
+                page = int(page)
+                object_count_on_page = 5
+                from_object = ((page - 1) * object_count_on_page)
+                to_object = from_object + object_count_on_page
+                result = MovieSchema(many=True).dump(all_movies[from_object:to_object])
+            except ValueError:
+                return '', 400
+        else:
+            result = MovieSchema(many=True).dump(all_movies)
+        return result, 200
+
     def post(self):
         req_json = request.json
         movie = movie_service.create(req_json)
@@ -48,7 +57,6 @@ class MovieView(Resource):
         sm_d = MovieSchema().dump(b)
         return sm_d, 200
 
-    @admin_required
     def put(self, bid):
         req_json = request.json
         if "id" not in req_json:
@@ -56,7 +64,6 @@ class MovieView(Resource):
         movie_service.update(req_json)
         return "", 204
 
-    @admin_required
     def delete(self, bid):
         movie_service.delete(bid)
         return "", 204

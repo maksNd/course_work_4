@@ -20,8 +20,8 @@ class UserService:
     def create(self, data):
         return self.dao.create(data)
 
-    def update(self, user_data):
-        return self.dao.update(user_data)
+    def update(self, user_data, email):
+        return self.dao.update(user_data, email)
 
     def delete(self, uid):
         return self.dao.delete(uid)
@@ -34,17 +34,9 @@ class UserService:
             PWD_HASH_ITERATIONS
         ).decode('utf-8', 'ignore')
 
-    def auth(self, login, password):
-        user = self.dao.search_by_login(login)
-        if user is None:
-            return False
-        if user.password != self.get_hash(password):
-            return False
-        return True
+    def generate_jwt(self, email, secret=SECRET, algo=ALGO):
 
-    def generate_jwt(self, login, password, role, secret=SECRET, algo=ALGO):
-
-        user_obj = {'login': login, 'password': password, 'role': role}
+        user_obj = {'email': email}
 
         days2 = datetime.datetime.utcnow() + datetime.timedelta(days=2)  # задаем время жизни токена
         user_obj['exp'] = calendar.timegm(days2.timetuple())  # кол-во секунд с января 1970 (дата истечения jwt)
@@ -55,9 +47,29 @@ class UserService:
         refresh_token = jwt.encode(user_obj, secret, algorithm=algo)
         return {'access_token': access_token, 'refresh_token': refresh_token}
 
+    def search_by_email(self, email):
+        return self.dao.search_by_email(email)
+
     def check_token(self, token, secret=SECRET, algo=ALGO):
         try:
-            jwt.decode(token, secret, algorithms=[algo])
+            jwt.decode(token, secret, algorithms=algo)
             return True
-        except Exception as e:
+        except Exception:
             return False
+
+    def check_email_password_confirmance(self, email, password):
+        user = self.dao.search_by_email(email)
+        if user is None:
+            return False
+        if user.password != self.get_hash(password):
+            return False
+        return True
+
+    def check_token_email_conformance(self, email, token, secret=SECRET, algo=ALGO):
+        if self.search_by_email(email) is None:
+            return False
+        if self.check_token(token) is False:
+            return False
+        if email != jwt.decode(token, secret, algorithms=algo)['email']:
+            return False
+        return True

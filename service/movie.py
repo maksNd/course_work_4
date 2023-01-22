@@ -19,6 +19,9 @@ class MovieService:
             movies = self.dao.get_all()
         return movies
 
+    def get_sorted(self):
+        return self.dao.get_sorted()
+
     def create(self, movie_d):
         return self.dao.create(movie_d)
 

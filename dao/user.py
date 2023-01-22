@@ -30,12 +30,27 @@ class UserDAO:
         self.session.commit()
         return user
 
-    def update(self, user_data):
-        user = self.get_one(user_data.get('id'))
-        user.id = user_data.get('id')
-        user.username = user_data.get('username')
-        user.password = self.get_hash(user_data.get('password'))
-        user.role = user_data.get('role')
+    def update(self, user_data, email):
+        user = self.search_by_email(email)
+        if user_data.get('email') is not None:
+            user.email = user_data.get('email')
+        if user_data.get('name') is not None:
+            user.name = user_data.get('name')
+        if user_data.get('surname') is not None:
+            user.surname = user_data.get('surname')
+        if user_data.get('favorite_genre') is not None:
+            user.favorite_genre = user_data.get('favorite_genre')
+        if user_data.get('password') is not None:
+            new_password = self.get_hash(user_data.get('password'))
+            user.password = new_password
+
+        # user = self.get_one(user_data.get('id'))
+        # user.id = user_data.get('id')
+        # user.email = user_data.get('email')
+        # user.password = self.get_hash(user_data.get('password'))
+        # user.name = user_data.get('name')
+        # user.surname = user_data.get('surname')
+        # user.favorite_genre = user_data.get('favorite_genre')
 
         self.session.add(user)
         self.session.commit()
@@ -45,8 +60,8 @@ class UserDAO:
         self.session.delete(user)
         self.session.commit()
 
-    def search_by_login(self, login):
-        user = self.session.query(User).filter(User.username == login).first()
+    def search_by_email(self, email):
+        user = self.session.query(User).filter(User.email == email).first()
         if user is None:
             return None
         return user
