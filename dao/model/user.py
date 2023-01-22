@@ -20,4 +20,4 @@ class UserSchema(Schema):
     password = fields.Str()
     name = fields.Str()
     surname = fields.Str()
-    favorite_genre = fields.Pluck(GenreSchema, 'name')
+    favorite_genre = fields.Str()
