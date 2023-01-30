@@ -20,9 +20,10 @@ def login_required(func):
         try:
             data = request.json
             password = data.get('password', None)
+            email = data.get('email', None)
         except AttributeError:
             return """Пожалуйста, передавайте password в json формате {"password": "your_password"}""", 401
-        email = request.headers.get('email', None)
+        # email = request.headers.get('email', None)
         if password is None:
             abort(401)
         if user_service.check_email_password_confirmance(email, password) is False:
