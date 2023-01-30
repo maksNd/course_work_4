@@ -65,7 +65,6 @@ class UsersView(Resource):
         return result, 200
 
     @auth_required
-    @login_required
     def patch(self):
         data = request.json
         email = request.headers.get('email')
